@@ -42,6 +42,7 @@ export default function App() {
     closeDetailModal,
     openEditFromDetail,
     alarms,
+    sendToWa
   } = useTaskBoard(user?.id)
 
   const [showAlarms, setShowAlarms] = useState(false)
@@ -148,6 +149,12 @@ export default function App() {
             <Plus size={18} />
             Tugas Baru
           </button>
+          <button
+            onClick={() => sendToWa()}
+            className="bg-green-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 flex items-center gap-2"
+          >           
+            Kirim WA
+          </button>
 
           <div className="h-10 w-px bg-slate-200 mx-2 hidden lg:block" />
 
@@ -214,6 +221,7 @@ export default function App() {
           listTitle={selectedCard.listTitle}
           onClose={closeDetailModal}
           onEdit={openEditFromDetail}
+          
         />
       )}
 

@@ -35,6 +35,29 @@ const INITIAL_LISTS: TaskList[] = [
     { id: 'list-3', title: 'Selesai', cards: [] },
 ]
 
+import moment from 'moment';
+import 'moment/locale/id';
+async function generateWAText(tasks : any[], nama : string) {
+  const today = moment().format('YYYY-MM-DD');
+  const tanggalFormatted = moment().format('DD MMMM YYYY');
+
+  const tasksToday = tasks.filter(task => task.dueDate === today);
+
+  if (tasksToday.length === 0) {
+    return `Rencana Kerja ${nama} tanggal ${tanggalFormatted}:\n\nTidak ada task hari ini.`;
+  }
+
+  let text = `Rencana Kerja ${nama} tanggal ${tanggalFormatted}:\n\n`;
+
+  tasksToday.forEach((task, index) => {
+    text += `${index + 1}. ${task.project} :\n`;
+    text += `Task : ${task.title}\n`;
+    text += `Tujuan : ${task.goal}\n\n`;
+  });
+
+  return text.trim();
+}
+
 export function useTaskBoard(employeeId?: string) {
     const [lists, setLists] = useState<TaskList[]>(INITIAL_LISTS)
     const [view, setView] = useState<'board' | 'table'>('board')
@@ -265,6 +288,7 @@ export function useTaskBoard(employeeId?: string) {
                 deskripsi: formData.description,
                 priority: formData.priority.toLowerCase() as any,
                 deadline: new Date(formData.dueDate),
+                proof: formData.proof
             }
 
             const res = await fetch('/api/tasks', {
@@ -305,6 +329,18 @@ export function useTaskBoard(employeeId?: string) {
         }
     }
 
+
+    const sendToWa = async() =>{
+        //get today 
+        const message = await generateWAText(allTasks, 'Noel');
+        try {
+            await navigator.clipboard.writeText(message);
+            alert('Berhasil disalin ke clipboard ✅');
+        }catch(e){
+            alert(e)
+        }
+    }
+
     return {
         // State
         lists,
@@ -336,5 +372,6 @@ export function useTaskBoard(employeeId?: string) {
         openDetailModal,
         closeDetailModal,
         openEditFromDetail,
+        sendToWa
     }
 }
