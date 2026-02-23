@@ -1,12 +1,16 @@
 'use client'
 
 import React from 'react'
-import { Layout, Table as TableIcon, Plus, LogOut, User as UserIcon, Loader2, Bell, AlertTriangle, TrendingUp } from 'lucide-react'
+import { Layout, Table as TableIcon, Plus, LogOut, User as UserIcon, Loader2, Bell, AlertTriangle, TrendingUp, Users, User, AlertCircle, Shield } from 'lucide-react'
+import Link from 'next/link'
 import { useTaskBoard } from './hooks/useTaskBoard'
 import BoardView from './components/BoardView'
 import TableView from './components/TableView'
 import TaskModal from './components/TaskModal'
 import TaskDetailModal from './components/TaskDetailModal'
+import ReasonModal from './components/ReasonModal'
+import AchievementModal from './components/AchievementModal'
+import QuickTaskForm from './components/QuickTaskForm'
 import { useAuth } from './providers/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -14,6 +18,11 @@ import MonitoringDashboard from './components/MonitoringDashboard'
 
 export default function App() {
   const { user, loading, logout } = useAuth()
+  const isCoordinator = user?.role?.toLowerCase() === 'coordinator' || user?.role?.toLowerCase() === 'koordinator'
+  const [boardMode, setBoardMode] = useState<'my' | 'team'>('my')
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false)
+  const [emergencyReason, setEmergencyReason] = useState('')
+
   const {
     lists,
     view,
@@ -42,8 +51,17 @@ export default function App() {
     closeDetailModal,
     openEditFromDetail,
     alarms,
-    sendToWa
-  } = useTaskBoard(user?.id)
+    sendToWa,
+    allTeamTasks,
+    showReasonModal,
+    showAchievementModal,
+    pendingDrop,
+    handleReasonConfirm,
+    handleAchievementConfirm,
+    handleModalCancel,
+    submitQuickTask,
+    sendTaskToday
+  } = useTaskBoard(user?.id, isCoordinator && boardMode === 'team')
 
   const [showAlarms, setShowAlarms] = useState(false)
 
@@ -73,20 +91,86 @@ export default function App() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
-      {/* Header */}
-      <header className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 flex items-center gap-2">
-            <Layout className="text-blue-600" size={32} />
-            Task Monitor
-          </h1>
-          <p className="text-slate-500 mt-1">
-            Kelola tugas, target, dan verifikasi bukti selesai
-          </p>
+    <div className="flex h-screen overflow-hidden bg-slate-50">
+      {/* Sidebar - Task Form */}
+      <aside className="w-80 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200 overflow-y-auto shadow-sm">
+        <div className="p-5">
+          <div className="mb-6 pb-5 border-b border-slate-200">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-600 rounded-lg">
+                <Layout size={20} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-base font-black text-slate-900">Task Monitor</h1>
+                <p className="text-[10px] text-slate-400">Centrum Carlo Acutis</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Quick Task Form - Always Expanded */}
+          <QuickTaskForm
+            formData={formData}
+            onChange={setFormData}
+            onSubmit={async () => {
+              // Submit langsung tanpa membuka modal
+              const success = await submitQuickTask(formData)
+              if (success) {
+                // Reset form setelah berhasil
+                setFormData({
+                  title: '',
+                  project: '',
+                  goal: '',
+                  description: '',
+                  priority: 'Medium',
+                  startDate: '',
+                  dueDate: '',
+                  proof: '',
+                })
+              }
+            }}
+            onCancel={() => {
+              setFormData({
+                title: '',
+                project: '',
+                goal: '',
+                description: '',
+                priority: 'Medium',
+                startDate: '',
+                dueDate: '',
+                proof: '',
+              })
+            }}
+            alwaysExpanded={true}
+          />
         </div>
+      </aside>
 
-        <div className="flex flex-wrap items-center gap-4">
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-4 md:p-8">
+          {/* Header */}
+          <header className="mb-8 flex items-center justify-between gap-6">
+        <div className="flex flex-wrap items-center gap-4 flex-1">
+          {/* Dual-View Mode Toggle (for Coordinator) */}
+          {isCoordinator ? (
+            <div className="bg-slate-200 p-1 rounded-xl flex items-center shadow-inner">
+              <button
+                onClick={() => setBoardMode('my')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${boardMode === 'my' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                <User size={16} />
+                My Board
+              </button>
+              <button
+                onClick={() => setBoardMode('team')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${boardMode === 'team' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                <Users size={16} />
+                Team Board
+              </button>
+            </div>
+          ) : null}
+
           <div className="bg-slate-200 p-1 rounded-xl flex items-center shadow-inner">
             <button
               onClick={() => setView('board')}
@@ -142,24 +226,44 @@ export default function App() {
             )}
           </div>
 
+          {/* Admin Link (for Coordinator) */}
+          {isCoordinator && (
+            <Link
+              href="/admin/claims"
+              className="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-slate-200 flex items-center gap-2"
+            >
+              <Shield size={18} />
+              Admin
+            </Link>
+          )}
+
+          {/* Emergency Button */}
           <button
-            onClick={() => openAddModal(lists[0]?.id)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 flex items-center gap-2"
+            onClick={() => setShowEmergencyModal(true)}
+            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-red-200 flex items-center gap-2 animate-pulse"
+            title="Log Komplain Mendadak"
           >
-            <Plus size={18} />
-            Tugas Baru
+            <AlertCircle size={18} />
+            Emergency
           </button>
+
+          {/* Copy today task Button */}
           <button
-            onClick={() => sendToWa()}
-            className="bg-green-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 flex items-center gap-2"
-          >           
-            Kirim WA
+            onClick={()=> sendTaskToday(user?.name)}
+            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-200 flex items-center gap-2"
+          >  
+            Salin Tugas Hari ini
           </button>
 
-          <div className="h-10 w-px bg-slate-200 mx-2 hidden lg:block" />
+          <button
+            onClick={() => sendToWa(user?.name || 'User', isCoordinator)}
+            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-200 flex items-center gap-2"
+          >           
+            Salin Laporan Atasan
+          </button>
 
-          {/* User Profile */}
-          <div className="flex items-center gap-4 bg-white p-2 pr-4 rounded-2xl border border-slate-200 shadow-sm group">
+          {/* User Profile - Pojok Kanan Atas */}
+          <div className="flex items-center gap-4 bg-white p-2 pr-4 rounded-2xl border border-slate-200 shadow-sm group ml-auto">
             <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 overflow-hidden border border-blue-200">
               {user.profilePicture ? (
                 <img src={user.profilePicture} alt={user.name} className="h-full w-full object-cover" />
@@ -204,6 +308,7 @@ export default function App() {
           onDrop={handleDrop}
           setIsAddingList={setIsAddingList}
           onOpenDetailModal={openDetailModal}
+          showUserNames={isCoordinator && boardMode === 'team'}
         />
       ) : (
         <TableView
@@ -225,7 +330,7 @@ export default function App() {
         />
       )}
 
-      {/* Modal */}
+      {/* Modals */}
       {modalMode && (
         <TaskModal
           mode={modalMode}
@@ -236,13 +341,71 @@ export default function App() {
         />
       )}
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
-      `}} />
+      {/* Reason Modal (for Backlog) */}
+      {showReasonModal && pendingDrop && (
+        <ReasonModal
+          title="Alasan Penundaan"
+          label="Alasan Penundaan"
+          placeholder="Mengapa tugas ini dipindahkan ke Backlog? Jelaskan alasan penundaan..."
+          onConfirm={handleReasonConfirm}
+          onCancel={handleModalCancel}
+          required={true}
+        />
+      )}
+
+      {/* Achievement Modal (for Done) */}
+      {showAchievementModal && pendingDrop && (
+        <AchievementModal
+          taskTitle={pendingDrop.card.title}
+          onConfirm={handleAchievementConfirm}
+          onCancel={handleModalCancel}
+        />
+      )}
+
+      {/* Emergency Modal */}
+      {showEmergencyModal && (
+        <ReasonModal
+          title="Log Komplain Mendadak"
+          label="Deskripsi Interupsi"
+          placeholder="Jelaskan komplain atau gangguan darurat yang terjadi..."
+          onConfirm={async (reason) => {
+            // Log emergency interruption
+            try {
+              await fetch('/api/tasks/emergency', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: user?.id,
+                  userName: user?.name,
+                  reason,
+                  timestamp: new Date().toISOString(),
+                }),
+              })
+              alert('Interupsi berhasil dicatat ✅')
+              setShowEmergencyModal(false)
+              setEmergencyReason('')
+            } catch (error) {
+              alert('Gagal mencatat interupsi')
+              console.error(error)
+            }
+          }}
+          onCancel={() => {
+            setShowEmergencyModal(false)
+            setEmergencyReason('')
+          }}
+          required={true}
+        />
+      )}
+
+          <style dangerouslySetInnerHTML={{
+            __html: `
+            .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+          `}} />
+        </div>
+      </main>
     </div>
   )
 }

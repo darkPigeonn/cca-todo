@@ -36,7 +36,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     if (res.ok) {
                         const profile = await res.json()
                         if (profile) {
-                            setUser({ ...firebaseUser, ...profile, isLinked: true })
+                            // Prioritize role from custom claims, fallback to database
+                            const finalRole = firebaseUser.role || profile.role
+                            setUser({ 
+                                ...firebaseUser, 
+                                ...profile, 
+                                role: finalRole,
+                                isLinked: true 
+                            })
                         } else {
                             setUser({ ...firebaseUser, isLinked: false })
                         }
@@ -68,11 +75,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (user?.uid) {
             setLoading(true)
             try {
+                // Refresh token to get latest custom claims
+                await authService.refreshUserToken()
+                
+                // Fetch profile from API
                 const res = await fetch(`/api/profile?uid=${user.uid}`)
                 if (res.ok) {
                     const profile = await res.json()
                     if (profile) {
-                        setUser({ ...user, ...profile, isLinked: true })
+                        // Get updated user with custom claims
+                        const currentUser = authService.getCurrentUser()
+                        const finalRole = currentUser?.role || profile.role
+                        setUser({ 
+                            ...user, 
+                            ...profile, 
+                            role: finalRole,
+                            isLinked: true 
+                        })
                     }
                 }
             } catch (error) {

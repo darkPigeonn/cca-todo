@@ -27,6 +27,55 @@ interface BoardViewProps {
     onDrop: (e: React.DragEvent<HTMLDivElement>, targetListId: string) => void
     setIsAddingList: (v: boolean) => void
     onOpenDetailModal: (listId: string, listTitle: string, card: CardTask) => void
+    showUserNames?: boolean
+}
+
+function getListColor(listId: string, title: string) {
+    // Color scheme based on status
+    if (listId === 'list-1' || title === 'Backlog') {
+        return {
+            bg: 'bg-orange-50',
+            border: 'border-orange-200',
+            headerBg: 'bg-orange-100',
+            headerText: 'text-orange-800',
+            accent: 'orange'
+        }
+    }
+    if (listId === 'list-2' || title === 'To Do') {
+        return {
+            bg: 'bg-blue-50',
+            border: 'border-blue-200',
+            headerBg: 'bg-blue-100',
+            headerText: 'text-blue-800',
+            accent: 'blue'
+        }
+    }
+    if (listId === 'list-3' || title === 'Doing') {
+        return {
+            bg: 'bg-purple-50',
+            border: 'border-purple-200',
+            headerBg: 'bg-purple-100',
+            headerText: 'text-purple-800',
+            accent: 'purple'
+        }
+    }
+    if (listId === 'list-4' || title === 'Done') {
+        return {
+            bg: 'bg-green-50',
+            border: 'border-green-200',
+            headerBg: 'bg-green-100',
+            headerText: 'text-green-800',
+            accent: 'green'
+        }
+    }
+    // Default
+    return {
+        bg: 'bg-slate-50',
+        border: 'border-slate-200',
+        headerBg: 'bg-slate-100',
+        headerText: 'text-slate-800',
+        accent: 'slate'
+    }
 }
 
 export default function BoardView({
@@ -45,22 +94,26 @@ export default function BoardView({
     onDrop,
     setIsAddingList,
     onOpenDetailModal,
+    showUserNames = false,
 }: BoardViewProps) {
     return (
         <div className="flex overflow-x-auto pb-6 gap-6 items-start custom-scrollbar">
-            {lists.map((list) => (
-                <div
-                    key={list.id}
-                    onDragOver={onDragOver}
-                    onDrop={(e) => onDrop(e, list.id)}
-                    className="flex-shrink-0 w-80 bg-slate-200/60 rounded-2xl p-4 flex flex-col max-h-[82vh]"
-                >
-                    <div className="flex items-center justify-between mb-4 px-1">
+            
+            {lists.map((list) => {
+                const colors = getListColor(list.id, list.title)
+                return (
+                    <div
+                        key={list.id}
+                        onDragOver={onDragOver}
+                        onDrop={(e) => onDrop(e, list.id)}
+                        className={`flex-shrink-0 w-80 ${colors.bg} border-2 ${colors.border} rounded-2xl p-4 flex flex-col max-h-[82vh] shadow-sm`}
+                    >
+                    <div className={`flex items-center justify-between mb-4 px-3 py-2 ${colors.headerBg} rounded-xl -mx-1`}>
                         <div className="flex items-center gap-2">
-                            <h2 className="font-bold text-slate-800 tracking-tight">
+                            <h2 className={`font-black ${colors.headerText} tracking-tight text-sm`}>
                                 {list.title}
                             </h2>
-                            <span className="bg-white/80 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                            <span className={`bg-white ${colors.headerText} text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm border ${colors.border}`}>
                                 {list.cards.length}
                             </span>
                         </div>
@@ -83,19 +136,29 @@ export default function BoardView({
                                 onDragStart={(e) => onDragStart(e, list.id, card.id)}
                                 onDragEnd={onDragEnd}
                                 onClick={() => onOpenDetailModal(list.id, list.title, card)}
+                                showUserName={showUserNames}
                             />
                         ))}
                     </div>
 
-                    <button
-                        onClick={() => onOpenAddModal(list.id)}
-                        className="mt-4 flex items-center justify-center gap-2 text-slate-500 hover:text-blue-600 hover:bg-white p-2.5 rounded-xl transition-all text-xs font-bold"
-                    >
-                        <Plus size={16} />
-                        Tambah Tugas
-                    </button>
-                </div>
-            ))}
+                    {list.title === 'Backlog' && (
+                        <button
+                            onClick={() => onOpenAddModal(list.id)}
+                            className={`mt-4 flex items-center justify-center gap-2 hover:bg-white/80 p-2.5 rounded-xl transition-all text-xs font-bold border ${colors.border} ${
+                            colors.accent === 'orange' ? 'text-orange-600 hover:text-orange-700' :
+                            colors.accent === 'blue' ? 'text-blue-600 hover:text-blue-700' :
+                            colors.accent === 'purple' ? 'text-purple-600 hover:text-purple-700' :
+                            colors.accent === 'green' ? 'text-green-600 hover:text-green-700' :
+                            'text-slate-600 hover:text-slate-700'
+                            }`}
+                        >
+                            <Plus size={16} />
+                            Tambah Tugas
+                        </button>
+                        )}
+                    </div>
+                )
+            })}
 
             {/* Add new list */}
             <div className="flex-shrink-0 w-80">
@@ -126,13 +189,14 @@ export default function BoardView({
                         </div>
                     </div>
                 ) : (
-                    <button
-                        onClick={() => setIsAddingList(true)}
-                        className="w-full flex items-center justify-center gap-2 bg-slate-200/40 hover:bg-slate-200/80 text-slate-500 p-4 rounded-2xl border-2 border-dashed border-slate-300 transition-all font-bold text-sm"
-                    >
-                        <Plus size={20} />
-                        Tambah List
-                    </button>
+                    // <button
+                    //     onClick={() => setIsAddingList(true)}
+                    //     className="w-full flex items-center justify-center gap-2 bg-slate-200/40 hover:bg-slate-200/80 text-slate-500 p-4 rounded-2xl border-2 border-dashed border-slate-300 transition-all font-bold text-sm"
+                    // >
+                    //     <Plus size={20} />
+                    //     Tambah List
+                    // </button>
+                    <div/>
                 )}
             </div>
         </div>

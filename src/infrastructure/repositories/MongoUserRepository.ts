@@ -8,14 +8,30 @@ export class MongoUserRepository implements IUserRepository {
         const db = client.db(process.env.MONGO_DB_NAME)
 
         // Using 'employees' collection as requested
+        console.log(uid)
         const employee = await db.collection('employees').findOne({ uid })
-
+        console.log(employee)
         if (!employee) return null
 
         return {
             id: employee._id.toString(),
             uid: employee.uid,
             email: employee.email,
+            name: employee.full_name || employee.name || employee.username || '',
+            role: employee.role,
+            profilePicture: employee.profilePicture || employee.photo,
+        }
+    }
+
+    async getUserById(id: string): Promise<UserProfile | null> {
+        const client = await clientPromise
+        const db = client.db(process.env.MONGO_DB_NAME)
+        const employee = await db.collection('employees').findOne({ _id: id as any})
+        if (!employee) return null
+        return {
+            id: employee._id.toString(),
+            uid: employee.uid || '',
+            email: employee.email || '',
             name: employee.full_name || employee.name || employee.username || '',
             role: employee.role,
             profilePicture: employee.profilePicture || employee.photo,

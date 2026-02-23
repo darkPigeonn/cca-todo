@@ -73,7 +73,6 @@ export default function TaskModal({
 
                 <div className="space-y-4">
                     {/* Project + Title */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
                                 Nama Proyek
@@ -97,9 +96,22 @@ export default function TaskModal({
                                         backgroundColor: '#f8fafc',
                                         borderColor: '#e2e8f0',
                                         boxShadow: 'none',
+                                        color: '#0f172a',
                                         '&:hover': {
                                             borderColor: '#94a3b8',
                                         },
+                                    }),
+                                    singleValue: (base) => ({
+                                        ...base,
+                                        color: '#0f172a',
+                                    }),
+                                    input: (base) => ({
+                                        ...base,
+                                        color: '#0f172a',
+                                    }),
+                                    placeholder: (base) => ({
+                                        ...base,
+                                        color: '#94a3b8',
                                     }),
                                     option: (base, state) => ({
                                         ...base,
@@ -123,67 +135,27 @@ export default function TaskModal({
                             <input
                                 type="text"
                                 placeholder="Selesaikan mockup..."
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-sm"
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-sm text-slate-900 placeholder:text-slate-400"
                                 value={formData.title}
                                 onChange={(e) => set({ title: e.target.value })}
                             />
                         </div>
-                    </div>
+
 
                     {/* Goal */}
                     <div>
-                        <label className="block text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                            <Target size={12} /> Tujuan Utama (Goal)
+                        <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                            <CheckCircle size={12} /> Tujuan Utama (Goal)
                         </label>
-                        <input
-                            type="text"
+                        <textarea
                             placeholder="Apa hasil akhir yang ingin dicapai?"
-                            className="w-full p-3 bg-emerald-50/30 border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-medium text-sm"
+                            rows={2}
+                            className="w-full p-3 bg-blue-50/30 border border-blue-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-sm text-slate-900 placeholder:text-slate-400"
                             value={formData.goal}
                             onChange={(e) => set({ goal: e.target.value })}
                         />
                     </div>
 
-                    {/* Proof */}
-                    <div>
-                        <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                            <CheckCircle size={12} /> Bukti Selesai (Link/Catatan)
-                        </label>
-                        <textarea
-                            placeholder="Lampirkan tautan dokumen, folder, atau ringkasan hasil kerja..."
-                            rows={2}
-                            className="w-full p-3 bg-blue-50/30 border border-blue-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-sm"
-                            value={formData.proof}
-                            onChange={(e) => set({ proof: e.target.value })}
-                        />
-                    </div>
-
-                    {/* Dates */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                <Calendar size={12} /> Mulai
-                            </label>
-                            <input
-                                type="date"
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-sm"
-                                value={formData.startDate}
-                                onChange={(e) => set({ startDate: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                <Clock size={12} /> Tenggat
-                            </label>
-                            <input
-                                type="date"
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-sm"
-                                value={formData.dueDate}
-                                min={formData.startDate}
-                                onChange={(e) => set({ dueDate: e.target.value })}
-                            />
-                        </div>
-                    </div>
 
                     {/* Priority */}
                     <div>

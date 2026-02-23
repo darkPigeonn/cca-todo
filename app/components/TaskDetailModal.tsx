@@ -55,7 +55,7 @@ export default function TaskDetailModal({
     const isOverdue =
         card.dueDate &&
         new Date(card.dueDate) < new Date() &&
-        listTitle !== 'Selesai'
+        listTitle !== 'Done'
 
     return (
         <div
@@ -178,6 +178,44 @@ export default function TaskDetailModal({
                             </p>
                         </div>
                     </div>
+
+                    {/* Alasan Penundaan (if in Backlog) */}
+                    {listTitle === 'Backlog' && card.alasanPenundaan && (
+                        <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                            <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <AlertTriangle size={12} /> Alasan Penundaan
+                            </p>
+                            <p className="text-sm text-orange-800 font-medium leading-relaxed">
+                                {card.alasanPenundaan}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Capaian & Kendala (if Done) */}
+                    {listTitle === 'Done' && (card.capaian || card.kendala) && (
+                        <div className="space-y-3">
+                            {card.capaian && (
+                                <div className="bg-green-50 p-4 rounded-2xl border border-green-100">
+                                    <p className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <CheckCircle size={12} /> Capaian
+                                    </p>
+                                    <p className="text-sm text-green-800 font-medium leading-relaxed">
+                                        {card.capaian}
+                                    </p>
+                                </div>
+                            )}
+                            {card.kendala && (
+                                <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                                    <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <AlertTriangle size={12} /> Kendala
+                                    </p>
+                                    <p className="text-sm text-orange-800 font-medium leading-relaxed">
+                                        {card.kendala}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Proof & Verification */}
                     <div className="space-y-3">

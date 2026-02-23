@@ -25,8 +25,8 @@ export default function MonitoringDashboard({ tasks }: Props) {
     const statusCounts = {
         total: tasks.length,
         todo: tasks.filter(t => t.status === TaskStatus.TODO).length,
-        progress: tasks.filter(t => t.status === TaskStatus.ON_PROGRESS).length,
-        stuck: tasks.filter(t => t.status === TaskStatus.STUCK).length,
+        progress: tasks.filter(t => t.status === TaskStatus.DOING).length,
+        stuck: tasks.filter(t => t.status === TaskStatus.BACKLOG).length,
         done: tasks.filter(t => t.status === TaskStatus.DONE).length,
     }
 

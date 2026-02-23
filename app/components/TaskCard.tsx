@@ -10,6 +10,7 @@ import {
     Target,
     FileText,
     Edit3,
+    User,
 } from 'lucide-react'
 import { CardTask } from '@/src/domain/entities/Task'
 
@@ -21,6 +22,7 @@ interface TaskCardProps {
     onDragStart: (e: React.DragEvent<HTMLDivElement>) => void
     onDragEnd: (e: React.DragEvent<HTMLDivElement>) => void
     onClick: () => void
+    showUserName?: boolean
 }
 
 function getPriorityColor(priority: string) {
@@ -44,6 +46,14 @@ function formatDate(dateStr: string) {
     })
 }
 
+function getListBorderColor(listTitle: string) {
+    if (listTitle === 'Backlog') return 'hover:border-orange-400 border-orange-200'
+    if (listTitle === 'To Do') return 'hover:border-blue-400 border-blue-200'
+    if (listTitle === 'Doing') return 'hover:border-purple-400 border-purple-200'
+    if (listTitle === 'Done') return 'hover:border-green-400 border-green-200'
+    return 'hover:border-blue-300 border-slate-200'
+}
+
 export default function TaskCard({
     card,
     listTitle,
@@ -52,23 +62,23 @@ export default function TaskCard({
     onDragStart,
     onDragEnd,
     onClick,
+    showUserName = false,
 }: TaskCardProps) {
     const isOverdue =
         card.dueDate &&
         new Date(card.dueDate) < new Date() &&
-        listTitle !== 'Selesai'
+        listTitle !== 'Done'
 
     return (
         <div
-            draggable
-            onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
-            onClick={onClick}
-            className="group bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-grab active:cursor-grabbing hover:border-blue-300 transition-all duration-200"
+        draggable={card.status !== 40}
+        onDragStart={card.status !== 40 ? onDragStart : undefined}
+        onDragEnd={card.status !== 40 ? onDragEnd : undefined}
+            className={`group bg-white p-4 rounded-xl shadow-sm border-2 ${getListBorderColor(listTitle)} cursor-grab active:cursor-grabbing transition-all duration-200`}
         >
             <div className="flex justify-between items-start mb-2">
                 <div className="flex flex-col gap-1.5">
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 flex-wrap">
                         <span
                             className={`text-[9px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded border ${getPriorityColor(card.priority)}`}
                         >
@@ -77,6 +87,11 @@ export default function TaskCard({
                         {card.proof && (
                             <span className="bg-blue-600 text-white text-[9px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1">
                                 <CheckCircle size={10} /> TERVERIFIKASI
+                            </span>
+                        )}
+                        {showUserName && card.userName && (
+                            <span className="bg-purple-100 text-purple-700 text-[9px] font-extrabold px-2 py-0.5 rounded flex items-center gap-1">
+                                <User size={10} /> {card.userName}
                             </span>
                         )}
                     </div>

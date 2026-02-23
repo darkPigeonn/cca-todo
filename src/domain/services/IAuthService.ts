@@ -5,4 +5,5 @@ export interface IAuthService {
     logout(): Promise<void>
     onAuthStateChanged(callback: (user: UserProfile | null) => void): () => void
     getCurrentUser(): UserProfile | null
+    refreshUserToken?(): Promise<void> // Optional: refresh ID token to get latest custom claims
 }

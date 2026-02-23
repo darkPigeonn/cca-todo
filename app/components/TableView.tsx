@@ -48,7 +48,7 @@ export default function TableView({ allTasks, onEdit, onDelete, onOpenDetailModa
                             const isOverdue =
                                 task.dueDate &&
                                 new Date(task.dueDate) < new Date() &&
-                                task.listTitle !== 'Selesai'
+                                task.listTitle !== 'Done'
 
                             return (
                                 <tr

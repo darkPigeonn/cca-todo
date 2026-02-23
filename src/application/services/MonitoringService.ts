@@ -29,7 +29,7 @@ export class MonitoringService {
             : new Date(task.createdAt)
 
         const staleHours = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60)
-        if (task.status === TaskStatus.ON_PROGRESS && staleHours > 72) {
+        if (task.status === TaskStatus.DOING && staleHours > 72) {
             return `Task has been stagnant for ${Math.round(staleHours / 24)} days.`
         }
 
