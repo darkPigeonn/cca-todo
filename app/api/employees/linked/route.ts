@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/src/infrastructure/db/mongodb'
 
 export async function GET() {
@@ -18,6 +18,7 @@ export async function GET() {
             name: emp.full_name || emp.name || emp.username || '',
             role: emp.role || 'employee',
             id: emp._id.toString(),
+            phone_number : emp.phone_number
         }))
 
         return NextResponse.json(users)

@@ -1,5 +1,5 @@
 import { ITaskRepository } from '../../domain/repositories/ITaskRepository'
-import { CardTask, DbTask } from '../../domain/entities/Task'
+import { CardTask, DbTask, TaskStatus } from '../../domain/entities/Task'
 import { mapTaskToCard } from '../mappers/TaskMapper'
 import clientPromise from '../db/mongodb'
 import { ObjectId } from 'mongodb'
@@ -107,14 +107,26 @@ export class MongoTaskRepository implements ITaskRepository {
             return utcDate
         }
 
+        const getFridayThisWeek = () => {
+            const d = new Date();
+            const day = d.getDay();
+            // Jika hari ini Sabtu (6), geser ke belakang atau tetap di minggu yang sama?
+            // Logika ini akan mencari Jumat terdekat di minggu kalender yang sama (Minggu-Sabtu)
+            const diff = 5 - day; 
+            d.setDate(d.getDate() + diff);
+            return normalizeDateToStartOfDay(d);
+        };
+        //all created task must deadline on the friday in this weeks
+
         // Ensure all required fields are present with proper defaults
         const taskToInsert: Partial<DbTask> = {
             nama_task: taskData.nama_task || '',
             project_type: taskData.project_type || '',
             partner: taskData.partner || '',
+            goal : taskData.partner || '',
             deskripsi: taskData.deskripsi || '',
             priority: normalizePriority(taskData.priority),
-            deadline: normalizeDateToStartOfDay(taskData.deadline),
+            deadline: getFridayThisWeek(),
             createdAt: normalizeDateToStartOfDay(taskData.createdAt),
             id_leader: taskData.id_leader || taskData.userId || '',
             userId: taskData.userId || taskData.id_leader || '',
@@ -129,14 +141,15 @@ export class MongoTaskRepository implements ITaskRepository {
             alasanPenundaan: taskData.alasanPenundaan,
             capaian: taskData.capaian,
             kendala: taskData.kendala,
+            loggerStatus: [
+                {
+                    timestamp: new Date(),
+                    status: 'Task Created',
+                    details: `Task created with status ${taskData.status ?? 20}`
+                }
+            ]
         }
-        console.log("=== CREATE TASK DEBUG ===")
-        console.log("Raw taskData.deadline:", taskData.deadline, "type:", typeof taskData.deadline)
-        console.log("Raw taskData.createdAt:", taskData.createdAt, "type:", typeof taskData.createdAt)
-        console.log("Normalized deadline:", taskToInsert.deadline?.toISOString())
-        console.log("Normalized createdAt:", taskToInsert.createdAt?.toISOString())
-        console.log("taskToInsert", taskToInsert)
-        console.log("=== END DEBUG ===")
+    
         const result = await collection.insertOne(taskToInsert as any)
       
 
@@ -146,6 +159,23 @@ export class MongoTaskRepository implements ITaskRepository {
 
     async updateTask(id: string, task: Partial<DbTask>): Promise<CardTask> {
         const collection = await this.getCollection()
+        task.updatedAt = new Date() // Add updatedAt timestamp
+
+        // logging status change if status is being updated
+        if (task.status) {
+            const existing = await collection.findOne({ _id: new ObjectId(id) as any }) as unknown as DbTask
+            const oldStatus = existing?.status
+            if (oldStatus !== task.status) {
+                const oldStatusText = TaskStatus[oldStatus || 0] || `Unknown(${oldStatus})`
+                const newStatusText = TaskStatus[task.status] || `Unknown(${task.status})`
+                const logEntry = {
+                    timestamp: new Date(),
+                    status: `Status changed from ${oldStatusText} to ${newStatusText}`,
+                    details: `Task status updated from ${oldStatus} to ${task.status}`
+                }
+                task.loggerStatus = [...(existing?.loggerStatus || []), logEntry]
+            }
+        }
         await collection.updateOne(
             { _id: new ObjectId(id) as any },
             { $set: task }

@@ -32,7 +32,7 @@ interface BoardViewProps {
 
 function getListColor(listId: string, title: string) {
     // Color scheme based on status
-    if (listId === 'list-1' || title === 'Backlog') {
+    if (listId === 'list-1' || title === 'Eval') {
         return {
             bg: 'bg-orange-50',
             border: 'border-orange-200',
@@ -141,7 +141,7 @@ export default function BoardView({
                         ))}
                     </div>
 
-                    {list.title === 'Backlog' && (
+                    {/* {list.title === 'Eval' && (
                         <button
                             onClick={() => onOpenAddModal(list.id)}
                             className={`mt-4 flex items-center justify-center gap-2 hover:bg-white/80 p-2.5 rounded-xl transition-all text-xs font-bold border ${colors.border} ${
@@ -155,7 +155,7 @@ export default function BoardView({
                             <Plus size={16} />
                             Tambah Tugas
                         </button>
-                        )}
+                        )} */}
                     </div>
                 )
             })}

@@ -23,18 +23,27 @@ export interface SelectedCard {
 }
 
 async function fetchTasksFromApi(employeeId?: string): Promise<CardTask[]> {
- 
+
     const url = employeeId ? `/api/tasks?employeeId=${employeeId}` : '/api/tasks'
     const res = await fetch(url)
-    
+
     if (!res.ok) throw new Error('Failed to fetch tasks')
     const data = await res.json()
-    console.log(data)
     return data
 }
 
+async function fetchLastTaskFromApi(employeeId: string): Promise<CardTask | null> {
+    const res = await fetch(`/api/tasks/last?employeeId=${employeeId}`)
+
+    if (!res.ok) throw new Error('Failed to fetch last task')
+    const data = await res.json()
+    return data
+}
+
+
+
 const INITIAL_LISTS: TaskList[] = [
-    { id: 'list-1', title: 'Backlog', cards: [] },
+    { id: 'list-1', title: 'Eval', cards: [] },
     { id: 'list-2', title: 'To Do', cards: [] },
     { id: 'list-3', title: 'Doing', cards: [] },
     { id: 'list-4', title: 'Done', cards: [] },
@@ -44,79 +53,79 @@ import moment from 'moment';
 import 'moment/locale/id';
 
 async function generateWAText(tasks: any[], userTasks: any[], allTeamTasks: any[], userName: string, isCoordinator: boolean) {
-  const today = moment().format('YYYY-MM-DD');
-  const tanggalFormatted = moment().format('DD MMMM YYYY');
+    const today = moment().format('YYYY-MM-DD');
+    const tanggalFormatted = moment().format('DD MMMM YYYY');
 
-  // Calculate progress for Rio (coordinator)
-  const rioTasks = userTasks || []
-  const rioTotal = rioTasks.length
-  const rioDone = rioTasks.filter(t => t.status === 40).length
-  const rioProgress = rioTotal > 0 ? Math.round((rioDone / rioTotal) * 100) : 0
+    // Calculate progress for Rio (coordinator)
+    const rioTasks = userTasks || []
+    const rioTotal = rioTasks.length
+    const rioDone = rioTasks.filter(t => t.status === 40).length
+    const rioProgress = rioTotal > 0 ? Math.round((rioDone / rioTotal) * 100) : 0
 
-  // Calculate global team progress
-  const teamTotal = allTeamTasks.length
-  const teamDone = allTeamTasks.filter(t => t.status === 40).length
-  const teamProgress = teamTotal > 0 ? Math.round((teamDone / teamTotal) * 100) : 0
+    // Calculate global team progress
+    const teamTotal = allTeamTasks.length
+    const teamDone = allTeamTasks.filter(t => t.status === 40).length
+    const teamProgress = teamTotal > 0 ? Math.round((teamDone / teamTotal) * 100) : 0
 
-  let text = `📊 *Laporan Harian Centrum Task Monitor*\n`;
-  text += `📅 ${tanggalFormatted}\n\n`;
+    let text = `📊 *Laporan Harian Centrum Task Monitor*\n`;
+    text += `📅 ${tanggalFormatted}\n\n`;
 
-  if (isCoordinator) {
-    text += `👤 *Progres Pribadi (Rio):*\n`;
-    text += `✅ ${rioDone}/${rioTotal} tugas selesai (${rioProgress}%)\n\n`;
+    if (isCoordinator) {
+        text += `👤 *Progres Pribadi (Rio):*\n`;
+        text += `✅ ${rioDone}/${rioTotal} tugas selesai (${rioProgress}%)\n\n`;
 
-    text += `👥 *Progres Global Tim:*\n`;
-    text += `✅ ${teamDone}/${teamTotal} tugas selesai (${teamProgress}%)\n\n`;
-  }
-
-  // Group tasks by user for team view
-  if (isCoordinator && allTeamTasks.length > 0) {
-    const tasksByUser = new Map<string, any[]>()
-    allTeamTasks.forEach(task => {
-      const userId = task.userId || 'unknown'
-      const userName = task.userName || 'Unknown'
-      if (!tasksByUser.has(userName)) {
-        tasksByUser.set(userName, [])
-      }
-      tasksByUser.get(userName)!.push(task)
-    })
-
-    text += `📋 *Rincian Capaian & Kendala per Individu:*\n\n`;
-    tasksByUser.forEach((userTasks, userName) => {
-      const doneTasks = userTasks.filter(t => t.status === 40 && (t.capaian || t.kendala))
-      if (doneTasks.length > 0) {
-        text += `👤 *${userName}:*\n`;
-        doneTasks.forEach((task, idx) => {
-          text += `${idx + 1}. *${task.title}*\n`;
-          if (task.capaian) {
-            text += `   ✅ Capaian: ${task.capaian}\n`;
-          }
-          if (task.kendala) {
-            text += `   ⚠️ Kendala: ${task.kendala}\n`;
-          }
-          text += `\n`;
-        })
-      }
-    })
-  } else {
-    // Personal report
-    const myDoneTasks = rioTasks.filter(t => t.status === 40 && (t.capaian || t.kendala))
-    if (myDoneTasks.length > 0) {
-      text += `📋 *Capaian & Kendala Hari Ini:*\n\n`;
-      myDoneTasks.forEach((task, idx) => {
-        text += `${idx + 1}. *${task.title}*\n`;
-        if (task.capaian) {
-          text += `   ✅ Capaian: ${task.capaian}\n`;
-        }
-        if (task.kendala) {
-          text += `   ⚠️ Kendala: ${task.kendala}\n`;
-        }
-        text += `\n`;
-      })
+        text += `👥 *Progres Global Tim:*\n`;
+        text += `✅ ${teamDone}/${teamTotal} tugas selesai (${teamProgress}%)\n\n`;
     }
-  }
 
-  return text.trim();
+    // Group tasks by user for team view
+    if (isCoordinator && allTeamTasks.length > 0) {
+        const tasksByUser = new Map<string, any[]>()
+        allTeamTasks.forEach(task => {
+            const userId = task.userId || 'unknown'
+            const userName = task.userName || 'Unknown'
+            if (!tasksByUser.has(userName)) {
+                tasksByUser.set(userName, [])
+            }
+            tasksByUser.get(userName)!.push(task)
+        })
+
+        text += `📋 *Rincian Capaian & Kendala per Individu:*\n\n`;
+        tasksByUser.forEach((userTasks, userName) => {
+            const doneTasks = userTasks.filter(t => t.status === 40 && (t.capaian || t.kendala))
+            if (doneTasks.length > 0) {
+                text += `👤 *${userName}:*\n`;
+                doneTasks.forEach((task, idx) => {
+                    text += `${idx + 1}. *${task.title}*\n`;
+                    if (task.capaian) {
+                        text += `   ✅ Capaian: ${task.capaian}\n`;
+                    }
+                    if (task.kendala) {
+                        text += `   ⚠️ Kendala: ${task.kendala}\n`;
+                    }
+                    text += `\n`;
+                })
+            }
+        })
+    } else {
+        // Personal report
+        const myDoneTasks = rioTasks.filter(t => t.status === 40 && (t.capaian || t.kendala))
+        if (myDoneTasks.length > 0) {
+            text += `📋 *Capaian & Kendala Hari Ini:*\n\n`;
+            myDoneTasks.forEach((task, idx) => {
+                text += `${idx + 1}. *${task.title}*\n`;
+                if (task.capaian) {
+                    text += `   ✅ Capaian: ${task.capaian}\n`;
+                }
+                if (task.kendala) {
+                    text += `   ⚠️ Kendala: ${task.kendala}\n`;
+                }
+                text += `\n`;
+            })
+        }
+    }
+
+    return text.trim();
 }
 
 export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
@@ -144,7 +153,7 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
     // Detail modal state
     const [selectedCard, setSelectedCard] = useState<SelectedCard | null>(null)
 
-    // Modal states for Backlog and Done
+    // Modal states for Evaluation and Done
     const [showReasonModal, setShowReasonModal] = useState(false)
     const [showAchievementModal, setShowAchievementModal] = useState(false)
     const [pendingDrop, setPendingDrop] = useState<{ card: CardTask, sourceListId: string, targetListId: string } | null>(null)
@@ -153,16 +162,16 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
     const fetchAndUpdateTasks = useCallback(async () => {
         // For team mode, fetch all tasks (no employeeId filter)
         const fetchId = teamMode ? undefined : employeeId
-     
+
         try {
             const data = await fetchTasksFromApi(fetchId)
             // Update lists - allTasks will be automatically derived from lists
-            console.log(data)
+           
             setLists([
                 {
                     id: 'list-1',
-                    title: 'Backlog',
-                    cards: data.filter((t) => t.status === TaskStatus.BACKLOG),
+                    title: 'Evaluation',
+                    cards: data.filter((t) => t.status === TaskStatus.EVAL),
                 },
                 {
                     id: 'list-2',
@@ -249,9 +258,9 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
         const card = sourceList?.cards.find((c) => c.id === draggedCard.cardId)
         if (!card || draggedCard.listId === targetListId) return
 
-        // Check if moving to Backlog or Done - show modal first
+        // Check if moving to Evaluation or Done - show modal first
         if (targetListId === 'list-1') {
-            // Moving to Backlog - require alasan penundaan
+            // Moving to Evaluation - require alasan penundaan
             setPendingDrop({ card, sourceListId: draggedCard.listId, targetListId })
             setShowReasonModal(true)
             return
@@ -268,7 +277,7 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
 
     const performDrop = async (card: CardTask, sourceListId: string, targetListId: string, additionalData?: { alasanPenundaan?: string, capaian?: string, kendala?: string }) => {
         // Map list ID to TaskStatus
-        let newStatus = TaskStatus.BACKLOG
+        let newStatus = TaskStatus.EVAL
         if (targetListId === 'list-2') newStatus = TaskStatus.TODO
         else if (targetListId === 'list-3') newStatus = TaskStatus.DOING
         else if (targetListId === 'list-4') newStatus = TaskStatus.DONE
@@ -292,11 +301,15 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
         }
     }
 
-    const handleReasonConfirm = async (reason: string) => {
+    const handleReasonConfirm = async (reason: string, type:string) => {
         if (!pendingDrop) return
         setShowReasonModal(false)
         await performDrop(pendingDrop.card, pendingDrop.sourceListId, pendingDrop.targetListId, { alasanPenundaan: reason })
         setPendingDrop(null)
+        //reload
+        if(type === 'table') {
+            location.reload()
+        }
     }
 
     const handleAchievementConfirm = async (capaian: string, kendala: string) => {
@@ -311,6 +324,12 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
         setShowAchievementModal(false)
         setPendingDrop(null)
         setDraggedCard(null)
+    }
+
+    const sendToBacklog = async (card: CardTask) => {
+        // Set the card's status to EVAL
+        setPendingDrop({ card, sourceListId: 'list-2', targetListId: 'list-1' })
+            setShowReasonModal(true)
     }
 
     // ── List operations ──────────────────────────────────────────────────────────
@@ -371,10 +390,10 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
 
         // Untuk daily task, otomatis set tanggal hari ini dalam format YYYY-MM-DD
         const today = new Date()
-        const todayString = today.getFullYear() + '-' + 
-                          String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                          String(today.getDate()).padStart(2, '0')
-        
+        const todayString = today.getFullYear() + '-' +
+            String(today.getMonth() + 1).padStart(2, '0') + '-' +
+            String(today.getDate()).padStart(2, '0')
+
         // Helper function to ensure date is in YYYY-MM-DD format
         const ensureDateFormat = (date: string | Date | undefined): string => {
             if (!date) return todayString
@@ -387,16 +406,16 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
             }
             if (date instanceof Date) {
                 // Convert Date to YYYY-MM-DD string using local timezone
-                return date.getFullYear() + '-' + 
-                       String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(date.getDate()).padStart(2, '0')
+                return date.getFullYear() + '-' +
+                    String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(date.getDate()).padStart(2, '0')
             }
             return todayString
         }
-        
+
         const deadlineDate = ensureDateFormat(taskFormData.dueDate)
         const createdAtDate = ensureDateFormat(taskFormData.startDate)
-        
+
         const taskData = {
             nama_task: taskFormData.title,
             project_type: taskFormData.project,
@@ -409,7 +428,7 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
             userId: employeeId,
             status: TaskStatus.TODO,
         }
-        
+
         console.log('submitQuickTask - sending dates:', { deadline: deadlineDate, createdAt: createdAtDate })
 
         const res = await fetch('/api/tasks', {
@@ -451,10 +470,10 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
             // Untuk daily task, otomatis set tanggal hari ini dalam format YYYY-MM-DD
             // Menggunakan timezone lokal untuk mendapatkan tanggal hari ini yang user lihat
             const today = new Date()
-            const todayString = today.getFullYear() + '-' + 
-                              String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                              String(today.getDate()).padStart(2, '0')
-            
+            const todayString = today.getFullYear() + '-' +
+                String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                String(today.getDate()).padStart(2, '0')
+
             // Helper function to ensure date is in YYYY-MM-DD format
             const ensureDateFormat = (date: string | Date | undefined): string => {
                 if (!date) return todayString
@@ -467,28 +486,28 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
                 }
                 if (date instanceof Date) {
                     // Convert Date to YYYY-MM-DD string using local timezone
-                    return date.getFullYear() + '-' + 
-                           String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                           String(date.getDate()).padStart(2, '0')
+                    return date.getFullYear() + '-' +
+                        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(date.getDate()).padStart(2, '0')
                 }
                 return todayString
             }
-            
+
             const deadlineDate = ensureDateFormat(formData.dueDate)
             const createdAtDate = ensureDateFormat(formData.startDate)
-            
+
             // Ensure both are strings in YYYY-MM-DD format (not Date objects or ISO strings)
-            const finalDeadline = typeof deadlineDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(deadlineDate) 
-                ? deadlineDate 
+            const finalDeadline = typeof deadlineDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(deadlineDate)
+                ? deadlineDate
                 : todayString
             const finalCreatedAt = typeof createdAtDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(createdAtDate)
                 ? createdAtDate
                 : todayString
-            
+
             console.log('Frontend creating task - today local:', todayString)
             console.log('Form dates - dueDate:', formData.dueDate, 'startDate:', formData.startDate)
             console.log('Final dates - deadline:', finalDeadline, 'createdAt:', finalCreatedAt)
-            
+
             const taskData = {
                 nama_task: formData.title,
                 project_type: formData.project,
@@ -499,9 +518,9 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
                 createdAt: finalCreatedAt, // Always string YYYY-MM-DD
                 id_leader: employeeId,
                 userId: employeeId, // Track user for team view
-                status: TaskStatus.TODO, // Default to TODO, not BACKLOG
+                status: TaskStatus.TODO, // Default to TODO, not EVAL
             }
-            
+
             // Verify taskData before sending
             console.log('Frontend sending taskData:', {
                 ...taskData,
@@ -530,7 +549,7 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
                 deadline: new Date(formData.dueDate),
                 proof: formData.proof
             }
-            
+
             // Update createdAt jika startDate diubah
             if (formData.startDate) {
                 taskData.createdAt = new Date(formData.startDate)
@@ -585,56 +604,182 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
             isCoordinator
         )
         try {
-            await navigator.clipboard.writeText(message)
+            // ✅ COPY DENGAN FALLBACK (AMAN DI SEMUA BROWSER)
+            try {
+                if (navigator?.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(message);
+                } else {
+                    const textarea = document.createElement("textarea");
+                    textarea.value = message;
+                    textarea.style.position = "fixed";
+                    textarea.style.opacity = "0";
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    textarea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(textarea);
+                }
+
+                alert("Berhasil disalin ke clipboard ✅");
+            } catch (err) {
+                console.error("Gagal copy:", err);
+            }
             alert('Laporan berhasil disalin ke clipboard ✅\nSiap dikirim ke WhatsApp!')
         } catch (e) {
             alert('Gagal menyalin: ' + e)
         }
     }
 
-    const sendTaskToday = async (userName:string)=>{
+    const sendTaskToday = async (userName: string, reportActive: boolean) => {
         const taskMe = allTasks;
         //
         moment.locale('id');
-
-        const today = moment().format('YYYY-MM-DD');
         const tanggalFormatted = moment().format('DD MMMM YYYY');
-
-        if (taskMe.length === 0) {
-            return `Rencana Kerja ${userName} tanggal ${tanggalFormatted}:\n\nTidak ada task hari ini.`;
-          }
         
-        let text = `Rencana Kerja ${userName} tanggal ${tanggalFormatted}:\n\n`;
-    
-        taskMe.forEach((task, index) => {
-            text += `${index + 1}. Projek ${task.project} :\n`;
-            text += `Task : ${task.title}\n`;
-            text += `Tujuan : ${task.goal}\n\n`;
+        // 1. Ambil task yang statusnya sedang berjalan (DOING)
+        const doingTasks = allTasks.filter(task => task.status === TaskStatus.DOING || task.status === TaskStatus.DONE);
+        
+        // 2. Jika tidak ada task yang statusnya DOING, maka return false (menghentikan proses)
+        if (doingTasks.length === 0) {
+            alert('Belum ada tugas hari ini, silahkan pindah dulu tugas di todo ke doing')
+            return false; 
+        }
+        
+        // 3. Jika ada yang DOING, baru susun laporannya
+        const title = reportActive ? 'Laporan Kerja' : "Rencana Kerja";
+        let text = `${title} ${userName} tanggal ${tanggalFormatted}:\n\n`;
+
+
+        let tasksToShow = !reportActive 
+        ? doingTasks.filter(item => item.status === TaskStatus.DOING) 
+        : doingTasks;
+        if(reportActive) {
+            const today = new Date().toISOString().split('T')[0]; 
+            
+            const filteredTasks = tasksToShow.filter(item => {
+                // Cek apakah statusnya 40
+                const isStatus40 = item.status === 40;
+                
+                // Cek apakah string updatedAt mengandung tanggal hari ini
+                const isUpdatedToday = item?.updatedAt?.includes(today);
+                
+                return isStatus40 && isUpdatedToday;
+            });
+            const filteredTasks2 = tasksToShow.filter(item => item.status == 30)
+            
+            tasksToShow = [...filteredTasks, ...filteredTasks2]
+            console.log(tasksToShow)
+        }
+        tasksToShow.forEach((task, index) => {
+            // Header Tugas dengan Emoji agar lebih menonjol
+            text += `*${index + 1}. [${task.project || 'Umum'}]*\n`;
+            
+            // Status dengan indikator visual (✅ vs ⏳)
+            const statusIcon = task.status === 40 ? '✅ *Dikerjakan*' : '⏳ *Belum Dikerjakan*';
+            text += `Status: ${statusIcon}\n`;
+            
+            text += `Task: ${task.title}\n`;
+            text += `Tujuan: ${task.goal || '-'}\n`;
+        
+            if (reportActive) {
+                // Menggunakan bullet points untuk laporan capaian/kendala
+                text += `📍 Capaian: ${task.capaian || 'Dalam proses pengerjaan...'}\n`;
+                text += `⚠️ Kendala: ${task.kendala || 'Tidak ada kendala'}\n`;
+            }
+            
+            // Pemisah antar tugas yang lebih rapi
+            text += `───────────────────\n\n`; 
         });
-    
+ 
+
+
         // ✅ COPY DENGAN FALLBACK (AMAN DI SEMUA BROWSER)
         try {
             if (navigator?.clipboard?.writeText) {
-            await navigator.clipboard.writeText(text);
+                await navigator.clipboard.writeText(text);
             } else {
-            const textarea = document.createElement("textarea");
-            textarea.value = text;
-            textarea.style.position = "fixed";
-            textarea.style.opacity = "0";
-            document.body.appendChild(textarea);
-            textarea.focus();
-            textarea.select();
-            document.execCommand("copy");
-            document.body.removeChild(textarea);
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.style.position = "fixed";
+                textarea.style.opacity = "0";
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textarea);
             }
 
             alert("Berhasil disalin ke clipboard ✅");
         } catch (err) {
             console.error("Gagal copy:", err);
         }
-        
-        
+
+
     }
+
+    const rememberTim = async (code: string) => {
+        const res = await fetch('/api/employees/linked')
+
+        if (!res.ok) return
+
+        const users = await res.json() // ini array
+
+        let employees = []
+        let message = "Hai, kamu masih punya task yang masi di todo, jangan lupa diupdate ya 😊"
+        // cari employee yang belum punya task
+        if(code === 'free') {
+            const employeeFree = users.filter((user: any) => {
+                const hasTask = allTasks.some(task => task.userId === user.id)
+                return !hasTask
+            })
+            employees = employeeFree
+            message = "Hai, kamu belum punya task hari ini, jangan lupa buat task ya 😊"
+        } else if(code === 'todo') {
+            const employeeFree = users.filter((user: any) => {
+                const userTasks = allTasks.filter(task => task.userId === user.id);
+                
+                const hasTodo = userTasks.some(task => task.status === TaskStatus.TODO);
+                const hasNoDoing = !userTasks.some(task => task.status === TaskStatus.DOING);
+                
+                return hasTodo && hasNoDoing;
+            });
+            employees = employeeFree
+            console.log(employees)
+        }
+        //send to api to give notification
+        const sendNotif = await fetch('/api/reminder/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                employees: employees.map((u: any) => ({
+                    id: u.id,
+                    name: u.full_name,
+                    phone: u.phone_number
+                })),
+                message: message
+              
+            })
+        })
+        alert('Reminder terkirim ke karyawan yang belum update task hari ini ✅')
+
+        console.log("Employee belum buat task:", employees)
+    }
+
+    const cekLastTask = async () => {
+        const res = await fetchLastTaskFromApi(employeeId!)
+        
+        if (res) {
+            return res
+        }
+    }
+
+
+    const getBacklogsTasks = async () => {
+       const res = await fetch('/api/tasks/backlogs')
+       const data = await res.json()
+       return data
+    }
+
     return {
         // Quick submit function
         submitQuickTask,
@@ -677,6 +822,10 @@ export function useTaskBoard(employeeId?: string, teamMode: boolean = false) {
         handleReasonConfirm,
         handleAchievementConfirm,
         handleModalCancel,
-        sendTaskToday
+        sendTaskToday,
+        rememberTim,
+        cekLastTask,
+        getBacklogsTasks,
+        sendToBacklog
     }
 }

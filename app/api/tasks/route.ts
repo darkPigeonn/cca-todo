@@ -14,15 +14,35 @@ export async function GET(request: Request) {
   const repository = new MongoTaskRepository()
   const useCase = new GetTasksUseCase(repository)
   const tasks = await useCase.execute(employeeId || undefined)
-  console.log(tasks)
-  // Get today tasks, backlog tasks, or tasks that are not done (active tasks)
-  const today = new Date().toISOString().split('T')[0]
+
+  // Get today tasks, eval tasks, or tasks that are not done (active tasks)
+  const now = new Date(); // Rabu, 11 Maret 2026
+  const dayOfWeek = now.getDay(); // 3 (Rabu)
+  
+  // Target Jumat adalah indeks 5
+  // Rumus: (5 - 3 + 7) % 7 = 2
+  let diffToFriday = (5 - dayOfWeek + 7) % 7;
+  
+  // Jika hari ini Jumat dan mau cari Jumat DEPAN, ubah 0 jadi 7
+  // if (diffToFriday === 0) {
+  //   diffToFriday = 7;
+  // }
+  
+  const friday = new Date(now);
+  friday.setDate(now.getDate() + diffToFriday);
+  
+  // MENGHINDARI BUG ISOSTRING: Gunakan format lokal YYYY-MM-DD
+  const year = friday.getFullYear();
+  const month = String(friday.getMonth() + 1).padStart(2, '0');
+  const date = String(friday.getDate()).padStart(2, '0');
+  const fridayISO = `${year}-${month}-${date}`;
+  
+  
   const filteredTasks = tasks.filter((task) => 
-    task.dueDate === today || 
-    task.status === TaskStatus.BACKLOG 
-  
-  )
-  
+    task.dueDate === fridayISO || 
+    task.status === TaskStatus.EVAL 
+  )  
+
   // Get fullName from employee collection for each task
   const userRepository = new MongoUserRepository()
   const tasksWithUserNames = await Promise.all(

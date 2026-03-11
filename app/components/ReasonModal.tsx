@@ -7,9 +7,10 @@ interface ReasonModalProps {
     title: string
     label: string
     placeholder: string
-    onConfirm: (reason: string) => void
+    onConfirm: (reason: string, type: 'card' | 'table') => void
     onCancel: () => void
     required?: boolean
+    type?: 'card' | 'table'
 }
 
 export default function ReasonModal({
@@ -19,6 +20,7 @@ export default function ReasonModal({
     onConfirm,
     onCancel,
     required = true,
+    type,
 }: ReasonModalProps) {
     const [reason, setReason] = useState('')
 
@@ -27,7 +29,7 @@ export default function ReasonModal({
             alert('Mohon isi ' + label.toLowerCase() + ' terlebih dahulu')
             return
         }
-        onConfirm(reason.trim())
+        onConfirm(reason.trim(), type || 'card')
     }
 
     return (
@@ -50,7 +52,7 @@ export default function ReasonModal({
                         onChange={(e) => setReason(e.target.value)}
                         placeholder={placeholder}
                         rows={4}
-                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-none font-medium text-sm resize-none"
+                        className="w-full text-black p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-none font-medium text-sm resize-none"
                     />
                 </div>
 

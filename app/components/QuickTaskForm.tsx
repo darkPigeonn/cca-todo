@@ -13,6 +13,7 @@ interface QuickTaskFormProps {
     onCancel?: () => void
     onSuccess?: () => void
     alwaysExpanded?: boolean
+    disabled?: boolean
 }
 
 export default function QuickTaskForm({
@@ -22,6 +23,7 @@ export default function QuickTaskForm({
     onCancel,
     onSuccess,
     alwaysExpanded = false,
+    disabled = false,
 }: QuickTaskFormProps) {
     const [projects, setProjects] = useState<Project[]>([])
     const [loadingProjects, setLoadingProjects] = useState(true)
@@ -69,6 +71,8 @@ export default function QuickTaskForm({
             </div>
         )
     }
+
+   
 
     return (
         <div className={`${alwaysExpanded ? '' : 'mb-6'}`}>
@@ -210,21 +214,28 @@ export default function QuickTaskForm({
 
                 {/* Actions */}
                 <div className="pt-2">
-                    <button
-                        type="submit"
-                        disabled={!formData.title.trim() || !formData.project.trim()}
-                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:shadow-none text-white font-black py-3 rounded-xl transition-all shadow-lg shadow-blue-200 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        <Plus size={18} />
-                        Simpan Tugas
-                    </button>
-                    {!alwaysExpanded && (
+                 {disabled ? (
+                        <p className="text-xs text-red-500 mb-2 font-bold">
+                            ⚠️ Tidak bisa membuat tugas baru karena masih ada tugas di eval atau belum dikerjakan. Silahkan selesaikan dulu tugas yang ada di eval sebelum membuat tugas baru atau hubungi koordinator.
+                        </p>
+                    ) : (
+                        <button
+                            type="submit"
+                            disabled={!formData.title.trim() || !formData.project.trim()}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:shadow-none text-white font-black py-3 rounded-xl transition-all shadow-lg shadow-blue-200 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            <Plus size={18} />
+                            Simpan Tugas
+                        </button>
+                    )}
+                    {!alwaysExpanded  && (
                         <button
                             type="button"
                             onClick={() => {
                                 setExpanded(false)
                                 onCancel?.()
                             }}
+                           
                             className="w-full mt-2 py-2.5 rounded-xl text-slate-600 hover:text-slate-800 font-bold text-sm bg-slate-100 hover:bg-slate-200 transition-colors"
                         >
                             Batal

@@ -91,13 +91,14 @@ export default function TaskDetailModal({
                             </div>
                         </div>
                         <div className="flex gap-1 shrink-0">
+                            {(card.status == 10 || card.status == 20) && (
                             <button
                                 onClick={onEdit}
                                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
                                 title="Edit tugas"
                             >
                                 <Edit3 size={16} />
-                            </button>
+                            </button>)}
                             <button
                                 onClick={onClose}
                                 className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
@@ -179,8 +180,8 @@ export default function TaskDetailModal({
                         </div>
                     </div>
 
-                    {/* Alasan Penundaan (if in Backlog) */}
-                    {listTitle === 'Backlog' && card.alasanPenundaan && (
+                    {/* Alasan Penundaan (if in Eval) */}
+                    {listTitle === 'Eval' && card.alasanPenundaan && (
                         <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
                             <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-2 flex items-center gap-2">
                                 <AlertTriangle size={12} /> Alasan Penundaan
@@ -217,81 +218,35 @@ export default function TaskDetailModal({
                         </div>
                     )}
 
-                    {/* Proof & Verification */}
-                    <div className="space-y-3">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                            Audit & Verifikasi
-                        </p>
-                        {card.proof ? (
-                            <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 space-y-4">
-                                <div className="flex items-start gap-3">
-                                    <FileText className="text-blue-500 mt-0.5 shrink-0" size={16} />
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">
-                                            Bukti Selesai
-                                        </p>
-                                        <p className="text-sm text-blue-800 font-medium break-words leading-relaxed">
-                                            {card.proof}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Verification Workflow Actions */}
-                                <div className="flex gap-2 pt-2 border-t border-blue-100">
-                                    <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 uppercase tracking-wider">
-                                        <ClipboardCheck size={14} /> Terbitkan Persetujuan
-                                    </button>
-                                    <button className="px-4 bg-white hover:bg-red-50 text-red-600 text-[10px] font-black py-2 rounded-xl transition-all border border-blue-100 border-dashed uppercase tracking-wider">
-                                        Revisi
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-200">
-                                <FileText className="text-slate-300 shrink-0" size={16} />
-                                <p className="text-sm text-slate-400 italic">
-                                    Belum ada bukti yang diajukan untuk verifikasi
-                                </p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Visual Audit Timeline */}
-                    <div className="space-y-4">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <History size={12} /> Riwayat Audit (Timeline)
-                        </p>
-                        <div className="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-px before:bg-slate-200">
-                            <TimelineEvent
-                                date="Baru saja"
-                                action="Dilihat oleh Manajer"
-                                user="Sistem Monitor"
-                                isLast
-                            />
-                            <TimelineEvent
-                                date={formatDate(card.startDate)}
-                                action="Tugas Dibuat"
-                                user="Sistem"
-                            />
-                        </div>
-                    </div>
+                  
                 </div>
 
                 {/* Footer */}
-                <div className="px-8 py-4 border-t border-slate-100 flex gap-3">
-                    <button
-                        onClick={onEdit}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-2xl transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-2 text-sm"
-                    >
-                        <Edit3 size={15} />
-                        Edit Tugas
-                    </button>
-                    <button
+                <div className="px-8 py-4 border-t border-slate-100">
+                    <div className="flex gap-3">
+                        
+                        {(card.status === 20 || card.status === 10) && (
+                        <button
+                            onClick={onEdit}
+                            className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition-all shadow-md shadow-blue-100 flex items-center justify-center gap-2 text-sm"
+                        >
+                            <Edit3 size={16} />
+                            Edit Tugas
+                        </button>
+                        )}
+
+                        <button
                         onClick={onClose}
-                        className="px-6 py-3 rounded-2xl text-slate-500 hover:text-slate-700 font-bold text-sm bg-slate-100 hover:bg-slate-200 transition-colors"
-                    >
+                        className={`h-12 rounded-2xl font-semibold text-sm transition-all 
+                            ${(card.status === 20 || card.status === 10)
+                            ? "px-6 bg-slate-100 hover:bg-slate-200 text-slate-600"
+                            : "flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600"
+                            }`}
+                        >
                         Tutup
-                    </button>
+                        </button>
+
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { use } from 'react'
 import { Layout, Table as TableIcon, Plus, LogOut, User as UserIcon, Loader2, Bell, AlertTriangle, TrendingUp, Users, User, AlertCircle, Shield } from 'lucide-react'
 import Link from 'next/link'
 import { useTaskBoard } from './hooks/useTaskBoard'
@@ -15,6 +15,7 @@ import { useAuth } from './providers/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import MonitoringDashboard from './components/MonitoringDashboard'
+import MonitoringDashboard2 from './components/MonitoringDashboard2'
 
 export default function App() {
   const { user, loading, logout } = useAuth()
@@ -22,6 +23,17 @@ export default function App() {
   const [boardMode, setBoardMode] = useState<'my' | 'team'>('my')
   const [showEmergencyModal, setShowEmergencyModal] = useState(false)
   const [emergencyReason, setEmergencyReason] = useState('')
+  const [hasBacklogTask, setHasBacklogTask] = useState(false)
+
+
+  const now = new Date();
+
+  const time = now.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric'
+  });
+  const [reportActive, setReportActive] = useState(false);
 
   const {
     lists,
@@ -60,7 +72,9 @@ export default function App() {
     handleAchievementConfirm,
     handleModalCancel,
     submitQuickTask,
-    sendTaskToday
+    sendTaskToday,
+    rememberTim,
+    cekLastTask
   } = useTaskBoard(user?.id, isCoordinator && boardMode === 'team')
 
   const [showAlarms, setShowAlarms] = useState(false)
@@ -75,7 +89,43 @@ export default function App() {
         router.push('/connect')
       }
     }
+
+    //fetch time
+    //jika jam sekarang sudah lebih dari jam 3 sore maka reportactive true
+
   }, [user, loading, router])
+
+  useEffect(() => {
+    const checkTime = () => {
+      const now = new Date();
+      setReportActive(now.getHours() >= 14);
+    };
+  
+    checkTime(); // cek saat pertama render
+  
+    const interval = setInterval(checkTime, 60000); // cek tiap menit
+  
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+  const backlogList = lists.find(
+    (list: any) => list.title?.toLowerCase() === 'eval'
+  )
+
+  setHasBacklogTask((backlogList?.cards?.length ?? 0) > 0)
+}, [lists])
+
+useEffect(() => {
+  const run = async () => {
+    const cek = await cekLastTask()
+    if (cek) {
+      setHasBacklogTask(true)
+    }
+  }
+
+  run()
+}, [cekLastTask])
 
   if (loading) {
     return (
@@ -88,9 +138,12 @@ export default function App() {
     )
   }
 
+
+
   if (!user) return null
 
   return (
+    
     <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Sidebar - Task Form */}
       <aside className="w-80 bg-gradient-to-b from-slate-50 to-white border-r border-slate-200 overflow-y-auto shadow-sm">
@@ -140,9 +193,45 @@ export default function App() {
                 proof: '',
               })
             }}
+            disabled={hasBacklogTask}
             alwaysExpanded={true}
           />
+
         </div>
+         {isCoordinator && (
+  <>
+  <div className='px-5 py-2.5 text-sm font-bold text-red-600 flex items-center gap-2'>
+    <AlertCircle size={18} />
+    Pengingat Tim
+  </div>
+  <div className='flex flex-col gap-2 px-5 mb-4'>
+    <button
+      onClick={() => rememberTim('free')}
+      className="cursor-pointer bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-red-200 flex items-center gap-2 animate-pulse"
+    >
+      <AlertCircle size={18} />
+      Ingatkan Tim
+    </button>
+
+    <button
+      onClick={() => rememberTim('todo')}
+      className="cursor-pointer bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-red-200 flex items-center gap-2 animate-pulse"
+    >
+      <AlertCircle size={18} />
+      Ingatkan Tim Todo
+    </button>
+    </div>
+        <Link
+              href="/admin/backlogs"
+              className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-200 flex items-center gap-2"
+            >
+              <TrendingUp size={18} />
+              Cek Eval
+            </Link>
+
+    
+  </>
+)}
       </aside>
 
       {/* Main Content */}
@@ -235,6 +324,7 @@ export default function App() {
               <Shield size={18} />
               Admin
             </Link>
+        
           )}
 
           {/* Emergency Button */}
@@ -249,10 +339,10 @@ export default function App() {
 
           {/* Copy today task Button */}
           <button
-            onClick={()=> sendTaskToday(user?.name)}
+            onClick={()=> sendTaskToday(user?.name, reportActive)}
             className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-green-200 flex items-center gap-2"
           >  
-            Salin Tugas Hari ini
+            Salin {reportActive ? `Laporan Hari ini` : `Tugas Hari ini`}
           </button>
 
           <button
@@ -289,8 +379,11 @@ export default function App() {
       </header>
 
       {/* Main Content */}
+      <MonitoringDashboard2 tasks={allTasks} />
       {view as string === 'dashboard' ? (
+        <>
         <MonitoringDashboard tasks={allTasks} />
+        </>
       ) : view === 'board' ? (
         <BoardView
           lists={lists}
@@ -341,15 +434,16 @@ export default function App() {
         />
       )}
 
-      {/* Reason Modal (for Backlog) */}
+      {/* Reason Modal (for Eval) */}
       {showReasonModal && pendingDrop && (
         <ReasonModal
           title="Alasan Penundaan"
           label="Alasan Penundaan"
-          placeholder="Mengapa tugas ini dipindahkan ke Backlog? Jelaskan alasan penundaan..."
+          placeholder="Mengapa tugas ini dipindahkan ke Eval? Jelaskan alasan penundaan..."
           onConfirm={handleReasonConfirm}
           onCancel={handleModalCancel}
           required={true}
+          
         />
       )}
 

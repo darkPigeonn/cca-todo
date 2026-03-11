@@ -12,13 +12,14 @@ export function mapTaskToCard(task: DbTask, userName?: string): CardTask {
         dueDate: formatDate(task.deadline),
         proof: task.note ?? '',
         status: task.status,
-        isStuck: task.status === TaskStatus.BACKLOG,
+        isStuck: task.status === TaskStatus.EVAL,
         hasDependency: !!task.dependencies && task.dependencies.length > 0,
         alasanPenundaan: task.alasanPenundaan,
         capaian: task.capaian,
         kendala: task.kendala,
         userId: task.userId || task.id_leader,
         userName: userName,
+        updatedAt: task.updatedAt?.toISOString()
     }
 }
 

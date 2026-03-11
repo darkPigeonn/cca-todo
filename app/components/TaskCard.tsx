@@ -11,6 +11,7 @@ import {
     FileText,
     Edit3,
     User,
+    Eye,
 } from 'lucide-react'
 import { CardTask } from '@/src/domain/entities/Task'
 
@@ -47,7 +48,7 @@ function formatDate(dateStr: string) {
 }
 
 function getListBorderColor(listTitle: string) {
-    if (listTitle === 'Backlog') return 'hover:border-orange-400 border-orange-200'
+    if (listTitle === 'Eval') return 'hover:border-orange-400 border-orange-200'
     if (listTitle === 'To Do') return 'hover:border-blue-400 border-blue-200'
     if (listTitle === 'Doing') return 'hover:border-purple-400 border-purple-200'
     if (listTitle === 'Done') return 'hover:border-green-400 border-green-200'
@@ -74,6 +75,7 @@ export default function TaskCard({
         draggable={card.status !== 40}
         onDragStart={card.status !== 40 ? onDragStart : undefined}
         onDragEnd={card.status !== 40 ? onDragEnd : undefined}
+        
             className={`group bg-white p-4 rounded-xl shadow-sm border-2 ${getListBorderColor(listTitle)} cursor-grab active:cursor-grabbing transition-all duration-200`}
         >
             <div className="flex justify-between items-start mb-2">
@@ -143,22 +145,34 @@ export default function TaskCard({
                 </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-50 mt-auto">
-                <div className="flex items-center text-slate-400 gap-1">
-                    <Calendar size={12} />
-                    <span className="text-[10px] font-medium">
-                        {formatDate(card.startDate)}
-                    </span>
+            <div className='flex justify-between items-center'>
+                <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-50 mt-auto">
+                    {/* <div className="flex items-center text-slate-400 gap-1">
+                        <Calendar size={12} />
+                        <span className="text-[10px] font-medium">
+                            {formatDate(card.startDate)}
+                        </span>
+                    </div> */}
+                    <div className="flex items-center text-slate-400 gap-1">
+                        <Clock size={12} />
+                        <span
+                            className={`text-[10px] font-bold ${isOverdue ? 'text-red-500' : ''}`}
+                        >
+                            {formatDate(card.dueDate)}
+                        </span>
+                    </div>
+
                 </div>
-                <div className="flex items-center text-slate-400 gap-1">
-                    <Clock size={12} />
-                    <span
-                        className={`text-[10px] font-bold ${isOverdue ? 'text-red-500' : ''}`}
-                    >
-                        {formatDate(card.dueDate)}
-                    </span>
+                <div className='flex items-center text-slate-400'>
+                        <button
+                            onClick={onClick}
+                            className='cursor-pointer'
+                        >
+                            <Eye color='green' size={20}/>
+                        </button>
                 </div>
             </div>
+
         </div>
     )
 }

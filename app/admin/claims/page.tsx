@@ -32,6 +32,10 @@ export default function CustomClaimsPage() {
     const [syncing, setSyncing] = useState(false)
     const [allUsers, setAllUsers] = useState<UserClaims[]>([])
     const [showAllUsers, setShowAllUsers] = useState(false)
+    const [showPhoneModal, setShowPhoneModal] = useState(false)
+    const [phoneNumber, setPhoneNumber] = useState('')
+    const [savingPhone, setSavingPhone] = useState(false)
+    const [selectedUid, setSelectedUid] = useState<string | null>(null)
 
     const handleGetClaims = async () => {
         if (!searchUid.trim()) {
@@ -168,6 +172,38 @@ export default function CustomClaimsPage() {
             console.error('Error fetching users:', error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleSavePhone = async (uid:string) => {
+       
+       
+    
+        try {
+            setSavingPhone(true)
+    
+            const res = await fetch('/api/employees/linked/', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    uid: uid,
+                    phoneNumber,
+                }),
+            })
+    
+            const data = await res.json()
+    
+            if (res.ok) {
+                setMessage({ type: 'success', text: 'Nomor HP berhasil disimpan' })
+                setShowPhoneModal(false)
+                setPhoneNumber('')
+            } else {
+                setMessage({ type: 'error', text: data.error || 'Gagal menyimpan nomor HP' })
+            }
+        } catch (err: any) {
+            setMessage({ type: 'error', text: err.message })
+        } finally {
+            setSavingPhone(false)
         }
     }
 
@@ -350,6 +386,8 @@ export default function CustomClaimsPage() {
                                             <RefreshCw size={18} />
                                         )}
                                     </button>
+
+
                                 </div>
                             )}
                         </div>
@@ -592,6 +630,14 @@ export default function CustomClaimsPage() {
                                                                 <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
                                                                 Sync
                                                             </button>
+                                                            {/* <button
+                                                                onClick={() =>{
+                                                                    setSelectedUid(u.uid) 
+                                                                    setShowPhoneModal(true)}}
+                                                                className="px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                                                            >
+                                                                📱 Tambah No HP
+                                                            </button> */}
                                                         </td>
                                                     </tr>
                                                 )
@@ -603,6 +649,43 @@ export default function CustomClaimsPage() {
                         )}
                     </div>
                 )}
+
+{showPhoneModal && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in">
+            
+            <h3 className="text-lg font-black text-slate-900 mb-4">
+                Tambah Nomor HP
+            </h3>
+
+            <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Contoh: 081234567890"
+                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            />
+
+            <div className="flex justify-end gap-3 mt-6">
+                <button
+                    onClick={() => setShowPhoneModal(false)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-semibold"
+                >
+                    Batal
+                </button>
+
+                {/* <button
+                    onClick={handleSavePhone}
+                    disabled={savingPhone}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 disabled:opacity-50"
+                >
+                    {savingPhone && <Loader2 size={16} className="animate-spin" />}
+                    Simpan
+                </button> */}
+            </div>
+        </div>
+    </div>
+)}
         </div>
     )
 }

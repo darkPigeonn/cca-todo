@@ -51,6 +51,8 @@ export class MonitoringService {
     static getWorkloadDistribution(tasks: DbTask[]): Record<string, number> {
         const distribution: Record<string, number> = {}
 
+        console.log(tasks)
+
         tasks.forEach(task => {
             if (task.status !== TaskStatus.DONE) {
                 task.members.forEach(memberId => {
@@ -58,6 +60,7 @@ export class MonitoringService {
                 })
             }
         })
+        console.log(distribution)
 
         return distribution
     }
